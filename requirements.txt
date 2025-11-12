@@ -1,5 +1,5 @@
 streamlit
 Pillow
 streamlit-image-coordinates
-opencv-python
+opencv-python-headless
 numpy
