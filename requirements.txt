@@ -1,3 +1,5 @@
 streamlit
 Pillow
 streamlit-image-coordinates
+opencv-python
+numpy
