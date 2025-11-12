@@ -14,7 +14,7 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
 
     # Resize for display
-    display_width = 600
+    display_width = 750
     w_percent = display_width / float(image.size[0])
     new_height = int(float(image.size[1]) * w_percent)
     image = image.resize((display_width, new_height))
@@ -58,7 +58,7 @@ if uploaded_file is not None:
 
                 # Original points
                 src_pts = np.array([[p["x"], p["y"]] for p in st.session_state.coords], dtype=np.float32)
-                width, height = 600, 400
+                width, height = 750, 500
                 dst_pts = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.float32)
 
                 img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
