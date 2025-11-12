@@ -94,5 +94,8 @@ if "corrected_image" in st.session_state:
     if len(st.session_state.line_coords) == 2:
         st.success("Two points selected!")
         avg_y_pixel = (st.session_state.line_coords[0]["y"] + st.session_state.line_coords[1]["y"]) / 2
-        real_y = y_min + (avg_y_pixel / st.session_state.corrected_image.size[1]) * (y_max - y_min)
+        img_width, img_height = st.session_state.corrected_image.size
+
+        # Map to real-world coordinates
+        real_y = y_min + (avg_y_pixel / img_height) * (y_max - y_min)
         st.write(f"Horizontal line corresponds to y = {real_y:.2f} (real-world units)")
