@@ -1,101 +1,80 @@
 import streamlit as st
 from PIL import Image, ImageDraw
 from streamlit_image_coordinates import streamlit_image_coordinates
-import numpy as np
-import cv2
 
-st.title("Image Upload and Perspective Correction")
+st.title("Drying Analysis")
 
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+# Assume corrected image and scaling info are already available
+# For demo, we simulate corrected image as blank canvas
+width, height = 600, 400
+corrected_image = Image.new("RGB", (width, height), "white")
 
-if uploaded_file is not None:
-    st.write("Double click on the four corners of a known grid to perform a perspective transform.")
-    st.write("Order: Top-Left, Top-Right, Bottom-Right, Bottom-Left")
-    image = Image.open(uploaded_file)
+# Ask user for scaling info
+user_input = st.text_input("Enter [y_min, y_max, x_min, x_max]:", "[28, 36, 7, 507]")
+y_min, y_max, x_min, x_max = eval(user_input)
 
-    # Resize image for display
-    display_width = 600
-    w_percent = display_width / float(image.size[0])
-    new_height = int(float(image.size[1]) * w_percent)
-    image = image.resize((display_width, new_height))
+# Initialize session state
+if "horizontal_points" not in st.session_state:
+    st.session_state.horizontal_points = []
+if "linear_points" not in st.session_state:
+    st.session_state.linear_points = []
 
-    # Initialize session state
-    if "coords" not in st.session_state:
-        st.session_state.coords = []
-    if "line_coords" not in st.session_state:
-        st.session_state.line_coords = []
+# Step 1: Click two points for horizontal line
+st.write("Click two points for horizontal line (y = constant)")
+img_h = corrected_image.copy()
+draw_h = ImageDraw.Draw(img_h)
+for pt in st.session_state.horizontal_points:
+    draw_h.ellipse((pt["x"]-4, pt["y"]-4, pt["x"]+4, pt["y"]+4), fill="blue", outline="black")
 
-    # Draw markers for first step
-    img_with_points = image.copy()
-    draw = ImageDraw.Draw(img_with_points)
-    for point in st.session_state.coords:
-        x, y = point["x"], point["y"]
-        r = 4
-        draw.ellipse((x - r, y - r, x + r, y + r), fill="red", outline="black")
+click_h = streamlit_image_coordinates(img_h)
+if click_h and len(st.session_state.horizontal_points) < 2:
+    st.session_state.horizontal_points.append(click_h)
 
-    # Clickable image for first step
-    coords = streamlit_image_coordinates(img_with_points)
-    if coords and len(st.session_state.coords) < 4:
-        st.session_state.coords.append(coords)
+st.write(f"Horizontal Points: {st.session_state.horizontal_points}")
 
-    st.write(f"Selected Points: {st.session_state.coords}")
+# Compute horizontal line real-world y
+if len(st.session_state.horizontal_points) == 2:
+    avg_y_pixel = (st.session_state.horizontal_points[0]["y"] + st.session_state.horizontal_points[1]["y"]) / 2
+    real_y_const = y_max - (avg_y_pixel / height) * (y_max - y_min)
+    st.success(f"Horizontal line: y = {real_y_const:.2f}")
 
-    if st.button("Reset Points"):
-        st.session_state.coords = []
-        st.session_state.line_coords = []
-        if "corrected_image" in st.session_state:
-            del st.session_state.corrected_image
+# Step 2: Click two points for linear line
+if len(st.session_state.horizontal_points) == 2:
+    st.write("Now click two points for linear line (y = a*x + b)")
+    img_l = corrected_image.copy()
+    draw_l = ImageDraw.Draw(img_l)
+    for pt in st.session_state.linear_points:
+        draw_l.ellipse((pt["x"]-4, pt["y"]-4, pt["x"]+4, pt["y"]+4), fill="red", outline="black")
 
-    # Perspective correction
-    if len(st.session_state.coords) == 4 and "corrected_image" not in st.session_state:
-        st.success("You have selected 4 points!")
-        st.write("Next: Enter [y_min, y_max, x_min, x_max] for scaling (not used in correction).")
-        user_input = st.text_input("Example: [0, 400, 0, 600]", "[0, 400, 0, 600]")
+    click_l = streamlit_image_coordinates(img_l)
+    if click_l and len(st.session_state.linear_points) < 2:
+        st.session_state.linear_points.append(click_l)
 
-        if st.button("Perform Perspective Correction"):
-            try:
-                y_min, y_max, x_min, x_max = eval(user_input)
+    st.write(f"Linear Points: {st.session_state.linear_points}")
 
-                src_pts = np.array([[p["x"], p["y"]] for p in st.session_state.coords], dtype=np.float32)
-                width, height = 600, 400
-                dst_pts = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.float32)
+# Compute linear line and intersection
+if len(st.session_state.linear_points) == 2 and len(st.session_state.horizontal_points) == 2:
+    # Convert linear points to real-world coords
+    img_width, img_height = corrected_image.size
+    p1 = st.session_state.linear_points[0]
+    p2 = st.session_state.linear_points[1]
 
-                img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-                matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
-                warped = cv2.warpPerspective(img_cv, matrix, (width, height))
+    x1_real = x_min + (p1["x"] / img_width) * (x_max - x_min)
+    y1_real = y_max - (p1["y"] / img_height) * (y_max - y_min)
+    x2_real = x_min + (p2["x"] / img_width) * (x_max - x_min)
+    y2_real = y_max - (p2["y"] / img_height) * (y_max - y_min)
 
-                corrected_image = Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
-                st.session_state.corrected_image = corrected_image
-                st.session_state.scaling_info = (y_min, y_max, x_min, x_max)
+    # Compute slope and intercept
+    a = (y2_real - y1_real) / (x2_real - x1_real)
+    b = y1_real - a * x1_real
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+    # Intersection with horizontal line
+    x_intersect = (real_y_const - b) / a
+    y_intersect = real_y_const
 
-# ✅ Display corrected image if available
-if "corrected_image" in st.session_state:
-    st.image(st.session_state.corrected_image, caption="Perspective Corrected Image", use_column_width=True)
-    y_min, y_max, x_min, x_max = st.session_state.scaling_info
+    drying_time = x_intersect - 20
+    drying_rate = 720 / drying_time
 
-    # Second step: click two points
-    st.write("Now click two points on the corrected image to define a horizontal line.")
-    img_line = st.session_state.corrected_image.copy()
-    draw_line = ImageDraw.Draw(img_line)
-    for point in st.session_state.line_coords:
-        lx, ly = point["x"], point["y"]
-        r = 4
-        draw_line.ellipse((lx - r, ly - r, lx + r, ly + r), fill="blue", outline="black")
-
-    line_click = streamlit_image_coordinates(img_line)
-    if line_click and len(st.session_state.line_coords) < 2:
-        st.session_state.line_coords.append(line_click)
-
-    st.write(f"Line Points: {st.session_state.line_coords}")
-
-    if len(st.session_state.line_coords) == 2:
-        st.success("Two points selected!")
-        avg_y_pixel = (st.session_state.line_coords[0]["y"] + st.session_state.line_coords[1]["y"]) / 2
-        img_width, img_height = st.session_state.corrected_image.size
-
-        # Correct mapping for Y (inverted)
-        real_y = y_max - (avg_y_pixel / img_height) * (y_max - y_min)
-        st.write(f"Horizontal line corresponds to y = {real_y:.2f} (real-world units)")
+    st.success(f"Intersection: X = {x_intersect:.2f}, Y = {y_intersect:.2f}")
+    st.write(f"Drying time = {drying_time:.2f} s")
+    st.write(f"Drying rate = {drying_rate:.2f} ml/h")
