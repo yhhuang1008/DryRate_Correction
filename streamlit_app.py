@@ -9,8 +9,9 @@ uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     # Load and resize image to width = 800 px
+    st.write("Click on the four corners of a known grid to perform a perspective transform.")
     image = Image.open(uploaded_file)
-    display_width = 800
+    display_width = 600
     w_percent = display_width / float(image.size[0])
     new_height = int(float(image.size[1]) * w_percent)
     image = image.resize((display_width, new_height))
