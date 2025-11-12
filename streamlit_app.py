@@ -96,6 +96,6 @@ if "corrected_image" in st.session_state:
         avg_y_pixel = (st.session_state.line_coords[0]["y"] + st.session_state.line_coords[1]["y"]) / 2
         img_width, img_height = st.session_state.corrected_image.size
 
-        # Map to real-world coordinates
-        real_y = y_min + (avg_y_pixel / img_height) * (y_max - y_min)
+        # Correct mapping for Y (inverted)
+        real_y = y_max - (avg_y_pixel / img_height) * (y_max - y_min)
         st.write(f"Horizontal line corresponds to y = {real_y:.2f} (real-world units)")
