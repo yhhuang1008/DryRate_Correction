@@ -10,7 +10,7 @@ st.title("Drying Analysis with Perspective Correction")
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    st.write("Click four corners of the grid (Order: Top-Left, Top-Right, Bottom-Right, Bottom-Left)")
+    st.write("Double click four corners of the grid (Order: Top-Left, Top-Right, Bottom-Right, Bottom-Left)")
     image = Image.open(uploaded_file)
 
     # Resize for display
@@ -78,7 +78,7 @@ if "corrected_image" in st.session_state:
     img_width, img_height = st.session_state.corrected_image.size
 
     # Step 1: Horizontal line
-    st.write("Click two points for horizontal line (y = constant)")
+    st.write("Double click two points for horizontal line (y = constant)")
     img_h = st.session_state.corrected_image.copy()
     draw_h = ImageDraw.Draw(img_h)
     for pt in st.session_state.horizontal_points:
@@ -95,7 +95,7 @@ if "corrected_image" in st.session_state:
 
     # Step 2: Linear line
     if len(st.session_state.horizontal_points) == 2:
-        st.write("Click two points for linear line (y = a*x + b)")
+        st.write("Double click two points for linear line (y = a*x + b)")
         img_l = st.session_state.corrected_image.copy()
         draw_l = ImageDraw.Draw(img_l)
         for pt in st.session_state.linear_points:
