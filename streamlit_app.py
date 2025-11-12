@@ -2,6 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+from streamlit_drawable_canvas import st_canvas
 
 st.title("Perspective Correction & Intersection Tool")
 
@@ -10,7 +11,8 @@ st.title("Perspective Correction & Intersection Tool")
 # ============================
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")  # Ensure proper format
+    # Ensure proper format for canvas
+    image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_column_width=True)
     img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
@@ -18,8 +20,8 @@ if uploaded_file:
     # Collect Points
     # ============================
     st.write("Click 4 points for perspective correction, then 2 for horizontal line, 2 for linear curve.")
-    from streamlit_drawable_canvas import st_canvas
 
+    # Canvas for point selection
     canvas_result = st_canvas(
         fill_color="rgba(255, 255, 255, 0)",
         stroke_width=3,
@@ -32,6 +34,7 @@ if uploaded_file:
         key="canvas",
     )
 
+    # Extract points
     if canvas_result.json_data is not None:
         points = [(obj["left"], obj["top"]) for obj in canvas_result.json_data["objects"]]
         st.write(f"Points selected: {points}")
@@ -105,4 +108,5 @@ if uploaded_file:
 
                 else:
                     st.warning("Please select 8 points (4 for correction, 2 for horizontal, 2 for linear curve).")
+
                 st.image(warped_img, caption="Corrected Image", channels="BGR")
