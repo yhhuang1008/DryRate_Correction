@@ -1,1 +1,1 @@
-streamlit\nopencv-python\nnumpy\npillow\nstreamlit-drawable-canvas
+streamlit\nopencv-python-headless\nnumpy\npillow\nstreamlit-drawable-canvas
