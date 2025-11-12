@@ -23,4 +23,11 @@ if uploaded_file is not None:
 
     # Show selected points
     st.write(f"Selected Points: {st.session_state.coords}")
+
+    # Success message when 4 points are selected
     if len(st.session_state.coords) == 4:
+        st.success("You have selected 4 points!")
+
+    # Reset button
+    if st.button("Reset Points"):
+        st.session_state.coords = []
