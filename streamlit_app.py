@@ -10,7 +10,7 @@ st.title("Perspective Correction & Intersection Tool")
 # ============================
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 if uploaded_file:
-    image = Image.open(uploaded_file)
+    image = Image.open(uploaded_file).convert("RGB")  # Ensure proper format
     st.image(image, caption="Uploaded Image", use_column_width=True)
     img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
@@ -24,7 +24,7 @@ if uploaded_file:
         fill_color="rgba(255, 255, 255, 0)",
         stroke_width=3,
         stroke_color="#FF0000",
-        background_image=image,
+        background_image=image,  # PIL image works now
         update_streamlit=True,
         height=image.height,
         width=image.width,
@@ -60,7 +60,7 @@ if uploaded_file:
                 M = cv2.getPerspectiveTransform(pts_src, pts_dst)
                 warped_img = cv2.warpPerspective(img_cv, M, (width, height))
 
-                # Compute intersection if enough points
+                # Draw intersection if enough points
                 if len(points) >= 8:
                     h_points = points[4:6]
                     l_points = points[6:8]
@@ -85,4 +85,24 @@ if uploaded_file:
                     st.write(f"Drying time: {y_intersect-20:.0f} s")
                     st.write(f"Drying rate: {720/(y_intersect-20):.2f} ml/hr")
 
+                    # Draw lines and intersection point
+                    img_display = warped_img.copy()
+                    pt1_h = (0, int((height * (y_max - y_h)) / (y_max - y_min)))
+                    pt2_h = (width, pt1_h[1])
+                    cv2.line(img_display, pt1_h, pt2_h, (255, 0, 0), 2)
+
+                    pt1_l = (0, int((height * (y_max - (a * x_min + b))) / (y_max - y_min)))
+                    pt2_l = (width, int((height * (y_max - (a * x_max + b))) / (y_max - y_min)))
+                    cv2.line(img_display, pt1_l, pt2_l, (0, 0, 255), 2)
+
+                    px_intersect = int((width * (x_intersect - x_min)) / (x_max - x_min))
+                    py_intersect = int((height * (y_max - y_intersect)) / (y_max - y_min))
+                    cv2.circle(img_display, (px_intersect, py_intersect), 8, (0, 255, 0), -1)
+                    cv2.putText(img_display, f"t={y_intersect:.0f}s", (px_intersect + 10, py_intersect - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+
+                    st.image(img_display, caption="Result with Intersection", channels="BGR")
+
+                else:
+                    st.warning("Please select 8 points (4 for correction, 2 for horizontal, 2 for linear curve).")
                 st.image(warped_img, caption="Corrected Image", channels="BGR")
