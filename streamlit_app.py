@@ -119,10 +119,10 @@ if "corrected_image" in st.session_state:
         st.write(f"Drying rate = {drying_rate:.2f} ml/h")
 
         # ✅ NEW FEATURE: Display linear equation and allow user input for y
-        st.subheader("Linear Fit and Custom Calculation")
+        st.subheader("(Optional) Manually input equilibrium temperature to calculate drying time and rate.")
         st.write(f"Linear equation: y = {a:.4f}x + {b:.4f}")
 
-        user_y = st.number_input("Enter a Y value to calculate X, Drying Time, and Rate:", value=real_y_const)
+        user_y = st.number_input("Enter a Y value (temperature) to calculate X (time finish drying):", value=real_y_const)
         if st.button("Calculate from Y"):
             x_from_y = (user_y - b) / a
             drying_time_custom = x_from_y - 20
