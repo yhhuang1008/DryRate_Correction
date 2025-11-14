@@ -118,5 +118,18 @@ if "corrected_image" in st.session_state:
         st.write(f"Drying time = {drying_time:.2f} s")
         st.write(f"Drying rate = {drying_rate:.2f} ml/h")
 
+        # ✅ NEW FEATURE: Display linear equation and allow user input for y
+        st.subheader("Linear Fit and Custom Calculation")
+        st.write(f"Linear equation: y = {a:.4f}x + {b:.4f}")
+
+        user_y = st.number_input("Enter a Y value to calculate X, Drying Time, and Rate:", value=real_y_const)
+        if st.button("Calculate from Y"):
+            x_from_y = (user_y - b) / a
+            drying_time_custom = x_from_y - 20
+            drying_rate_custom = 720 / drying_time_custom
+            st.success(f"For y = {user_y:.2f}: X = {x_from_y:.2f}")
+            st.write(f"Drying time = {drying_time_custom:.2f} s")
+            st.write(f"Drying rate = {drying_rate_custom:.2f} ml/h")
+
     if st.button("Reset Analysis Points"):
         st.session_state.analysis_points = []
